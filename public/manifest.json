@@ -1,9 +1,17 @@
 {
-    "name": "React DomoApp",
+    "name": "Four Seasons",
     "version": "0.0.1",
     "size": {
         "width": 3,
         "height": 3
     },
-    "mapping": []
+    "mapping": [
+        {
+            "dataSetId": "8d02f540-7fe5-419f-92f1-877ee35fc2c6",
+            "alias": "booking_data",
+            "fields":[]
+        }
+    ],
+    "id": "06f3771a-e9ab-47d8-a4fe-e35fdfa870fd",
+    "proxyId":"ea6790ee-7fe9-4544-bc55-7c513e487317"
 }
