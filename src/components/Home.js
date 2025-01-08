@@ -3,7 +3,6 @@ import fsLogo2 from '../assets/fs_logo1.png';
 import domo from "ryuu.js";
 import { useNavigate } from 'react-router-dom';
 import { FaBook } from 'react-icons/fa';
-import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 import seedrandom from 'seedrandom';
 // import { FaBed, FaDollarSign, FaUsers, FaUserTimes } from "react-icons/fa";
 
@@ -11,14 +10,14 @@ import seedrandom from 'seedrandom';
 const Home = () => {
   const [hotelData, setHotelData] = useState([]);
   const [selectedHotel, setSelectedHotel] = useState("");
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [bookingCount, setBookingCount] = useState(0); // Add this state
+  const [occupancyData, setOccupancyData] = useState([]);
   const [roomStats, setRoomStats] = useState({
     totalRooms: 0,
     occupiedRooms: 0,
     unoccupiedRooms: 0,
   });
-  const [totalRevenue, setTotalRevenue] = useState(0);
-  const [occupancyData, setOccupancyData] = useState([]);
-  const [sliderIndex, setSliderIndex] = useState(0);
   const navigate = useNavigate();
 
   const revenueData = {
@@ -37,22 +36,44 @@ const Home = () => {
   const isWeekend = () => {
     const today = new Date();
     const day = today.getDay();
-    return day === 6 || day === 0; // Saturday (6) or Sunday (0)
+    return day === 6 || day === 0; 
   };
 
 
   const fetchData = async () => {
     try {
       const data = await domo.get("/data/v1/hotel_data");
-      setHotelData(data); // Populate hotelData
+      setHotelData(data);
+      console.log('hotel data', data)
     } catch (error) {
       console.error("Error fetching data:", error);
     }
   };
 
+  const fetchBookingData = async () => {
+    try {
+      const data = await domo.get("/data/v1/booking_data");
+      console.log('booked data', data);
+  
+      // We filter by hotel name to count bookings for a specific hotel
+      const bookingsForSelectedHotel = data.filter((booking) => 
+        booking.Hotel_Name === selectedHotel && booking.Occupancy_Status === "Occupied"
+      );
+  
+      // Set the booking count (this counts all "Occupied" status rooms for the selected hotel)
+      setBookingCount(bookingsForSelectedHotel.length);
+
+      updateRoomStats(selectedHotel); 
+    } catch (error) {
+      console.error("Error fetching booking data:", error);
+    }
+  };
+  
   useEffect(() => {
     fetchData();
+    fetchBookingData();
   }, []);
+  
 
   useEffect(() => {
     // Update room stats only after hotelData is loaded
@@ -67,38 +88,77 @@ const Home = () => {
     updateRoomStats(hotel); // Update stats based on selected hotel
   };
 
+  // const updateRoomStats = (hotel = "") => {
+  //   const filteredData = hotel ? hotelData.filter((item) => item.Hotel_Name === hotel) : hotelData;
+
+  //   const totalRooms = filteredData.length;
+  //   const rng = seedrandom(hotel || 'default-seed'); // Use a hotel name or default seed
+  //   const occupiedPercentage = isWeekend() ? 0.75 + rng() * 0.1 : 0.65 + rng() * 0.1;
+  //   const occupiedRooms = Math.floor(totalRooms * occupiedPercentage);
+  //   const unoccupiedRooms = totalRooms - occupiedRooms;
+
+  //   setRoomStats({
+  //     totalRooms,
+  //     occupiedRooms,
+  //     unoccupiedRooms,
+  //   });
+
+  //   if (hotel && revenueData[hotel]) {
+  //     setTotalRevenue(revenueData[hotel]);
+  //   } else {
+  //     const totalRevenueAllHotels = Object.values(revenueData).reduce((acc, revenue) => acc + revenue, 0);
+  //     setTotalRevenue(totalRevenueAllHotels);
+  //   }
+
+  //   setOccupancyData(generateOccupancyTableData(occupiedRooms, totalRooms));
+  // };
+
   const updateRoomStats = (hotel = "") => {
-    const filteredData = hotel ? hotelData.filter((item) => item.Hotel_Name === hotel) : hotelData;
+  const filteredData = hotel ? hotelData.filter((item) => item.Hotel_Name === hotel) : hotelData;
+  const totalRooms = filteredData.length;
 
-    const totalRooms = filteredData.length;
-    const rng = seedrandom(hotel || 'default-seed'); // Use a hotel name or default seed
-    const occupiedPercentage = isWeekend() ? 0.75 + rng() * 0.1 : 0.65 + rng() * 0.1;
-    const occupiedRooms = Math.floor(totalRooms * occupiedPercentage);
-    const unoccupiedRooms = totalRooms - occupiedRooms;
-
+  // If the selected hotel has no rooms, skip updates
+  if (totalRooms === 0) {
     setRoomStats({
-      totalRooms,
-      occupiedRooms,
-      unoccupiedRooms,
+      totalRooms: 0,
+      occupiedRooms: 0,
+      unoccupiedRooms: 0,
     });
+    return;
+  }
 
-    if (hotel && revenueData[hotel]) {
-      setTotalRevenue(revenueData[hotel]);
-    } else {
-      const totalRevenueAllHotels = Object.values(revenueData).reduce((acc, revenue) => acc + revenue, 0);
-      setTotalRevenue(totalRevenueAllHotels);
-    }
+  const rng = seedrandom(hotel || 'default-seed'); // Use a hotel name or default seed
+  const occupiedPercentage = isWeekend() ? 0.75 + rng() * 0.1 : 0.65 + rng() * 0.1;
+  const occupiedRooms = Math.floor(totalRooms * occupiedPercentage);
 
-    setOccupancyData(generateOccupancyTableData(occupiedRooms, totalRooms));
-  };
+  // Use booking count to adjust occupied and unoccupied rooms
+  const adjustedOccupiedRooms = Math.min(occupiedRooms + bookingCount, totalRooms); // Ensure it doesn't exceed total rooms
+  const unoccupiedRooms = totalRooms - adjustedOccupiedRooms;
 
-  const generateOccupancyTableData = (hotels = 1) => {
+  setRoomStats({
+    totalRooms,
+    occupiedRooms: adjustedOccupiedRooms,
+    unoccupiedRooms,
+  });
+
+  if (hotel && revenueData[hotel]) {
+    setTotalRevenue(revenueData[hotel]);
+  } else {
+    const totalRevenueAllHotels = Object.values(revenueData).reduce((acc, revenue) => acc + revenue, 0);
+    setTotalRevenue(totalRevenueAllHotels);
+  }
+
+  setOccupancyData(generateOccupancyTableData(adjustedOccupiedRooms, totalRooms));
+};
+
+  
+  const generateOccupancyTableData = (occupiedRooms, totalRooms) => {
     const rows = 5; // 5 weeks (rows)
     const columns = 7; // 7 days a week (columns)
     const tableData = [];
 
     // Generate a unique seed based on hotelId to ensure consistency for each hotel
-    const hotelSeed = hotels; // Directly use hotel ID for uniqueness
+    const hotelSeed = occupiedRooms; // Directly use hotel ID for uniqueness
 
     // Simple pseudo-random number generator (PRNG)
     const random = (seed) => {
@@ -154,14 +214,6 @@ const Home = () => {
     navigate('/booking-form');
   };
 
-  const handleSliderLeft = () => {
-    setSliderIndex((prevIndex) => Math.max(prevIndex - 1, 0));
-  };
-
-  const handleSliderRight = () => {
-    setSliderIndex((prevIndex) => Math.min(prevIndex + 1, 2));  // 3 cards, max index is 2
-  };
-
   return (
     <div>
       <div className='flex justify-between items-center'>
@@ -169,7 +221,7 @@ const Home = () => {
           <img src={fsLogo2} alt="FS Logo" className="w-[70px] h-[70px] object-cover rounded-full mr-3 bg-white" />
           <div className='flex flex-col'>
             <span className="text-md text-[#035B61] font-semibold spacing">FOUR SEASONS</span>
-            <span className="text-xs text-[#035B61] spacing italic">Hotels and Resots</span>
+            <span className="text-xs text-[#035B61] spacing italic">Hotels and Resorts</span>
           </div>
         </nav>
         <button

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import domo, { navigate } from "ryuu.js";
+import domo from "ryuu.js";
 import { useNavigate } from "react-router-dom";
 import { MdOutlineCancel } from "react-icons/md";
 
@@ -16,6 +16,8 @@ const BookingForm = () => {
   const [segments, setSegments] = useState([]);
   const [roomTypes, setRoomTypes] = useState([]);
   const [roomIDs, setRoomIDs] = useState([]);
+  const [warningMessage, setWarningMessage] = useState("");
+  const [bookedData, setBookedData] = useState([]);
   const [formData, setFormData] = useState({});
   const navigate = useNavigate();
 
@@ -31,8 +33,19 @@ const BookingForm = () => {
     }
   };
 
+  const fetchBookingData = async () => {
+    try {
+      const data = await domo.get("/data/v1/booking_data");
+      setBookedData(data.map((booking) => booking.Room_ID));
+      console.log('booked data', data)
+    } catch (error) {
+      console.error("Error fetching booking data:", error);
+    }
+  }
+
   useEffect(() => {
     fetchData();
+    fetchBookingData();
   }, []);
 
   useEffect(() => {
@@ -83,16 +96,16 @@ const BookingForm = () => {
         setSelectedRoomID([]);
         break;
       case "roomID":
-        const selectedRoomIDValue = value.target.value;
-        setSelectedRoomID(selectedRoomIDValue);
-          // if (prevSelectedRoomIDs.includes(selectedRoomIDValue)) {
-          //   // If already selected, remove it (deselect)
-          //   return prevSelectedRoomIDs.filter((id) => id !== selectedRoomIDValue);
-          // } else {
-          //   // If not selected, add it
-          //   return [...prevSelectedRoomIDs, selectedRoomIDValue];
-          // }
-        // });
+        const selectedRoomIDValue = value.target.value; // Correctly access the value
+        const isBooked = bookedData.includes(selectedRoomIDValue); // Check if room is booked
+
+        if (isBooked) {
+          setWarningMessage(`Room ${selectedRoomIDValue} is already booked. Please select another room.`);
+          setSelectedRoomID(""); // Reset selection
+        } else {
+          setWarningMessage("");
+          setSelectedRoomID(selectedRoomIDValue);
+        }
         break;
       default:
         break;
@@ -160,12 +173,9 @@ const BookingForm = () => {
         "/domo/workflow/v1/models/four_seasons_booking_form/start",
         formData
       );
-      console.log('response', response)
 
       if (response.status === 200) {
         console.log("Form submitted successfully");
-      } else {
-        console.error("Error updating dataset:", response);
       }
     } catch (error) {
       console.error("Error updating dataset:", error);
@@ -177,15 +187,15 @@ const BookingForm = () => {
     <form onSubmit={handleSubmit} className="bg-[#035B61] w-[600px] mx-auto p-5 mt-6 space-y-2 rounded shadow-lg">
       {/* First Row: Guest name */}
       <div className="relative">
-    <h3 className="text-xl text-white font-bold text-center">Book Your Stay</h3>
-    <button
-      type="button"
-      onClick={() => navigate('/')}
-      className="absolute top-0 right-0 p-2 text-white rounded-md"
-    >
-      <MdOutlineCancel size={24} />
-    </button>
-  </div>
+        <h3 className="text-xl text-white font-bold text-center">Book Your Stay</h3>
+        <button
+          type="button"
+          onClick={() => navigate('/')}
+          className="absolute top-0 right-0 p-2 text-white rounded-md"
+        >
+          <MdOutlineCancel className="hover:bg-[#FB8D43] rounded-full" size={25} />
+        </button>
+      </div>
       <div className="grid grid-cols-1 gap-6">
         <div>
           <label className="block text-white">Guest Name:</label>
@@ -284,23 +294,40 @@ const BookingForm = () => {
             ))}
           </select>
         </div>
+
         <div className="mt-3">
           <label className="block text-white">Rooms:</label>
           <select
             name="Room_ID"
             value={selectedRoomID}
-            onChange={(e) => handleSelectionChange("roomID", e)}
+            onChange={(e) => handleSelectionChange("roomID", e)} // Pass the event object
             className="mt-2 p-3 w-full border border-gray-300 rounded-md"
           >
             <option value="">Select</option>
-            {roomIDs.map((roomID) => (
-              <option key={roomID} value={roomID}>
-                {roomID}
-              </option>
-            ))}
+            {roomIDs.map((roomID) => {
+              const isBooked = bookedData.includes(roomID); // Check if room is booked
+              return (
+                <option
+                  key={roomID}
+                  value={roomID}
+                  disabled={isBooked} // Disable booked rooms
+                  style={{ color: isBooked ? "red" : "black" }} // Style booked rooms in red
+                >
+                  {roomID} {isBooked ? "(Booked)" : ""}
+                </option>
+              );
+            })}
           </select>
+
         </div>
       </div>
+      {/* Warning Message */}
+      {warningMessage && (
+        <div className="mt-2 p-3 text-red-500 bg-red-100 rounded-md">
+          {warningMessage}
+        </div>
+      )}
+
 
       {/* Fifth Row: Check-In and Check-Out Dates */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -353,7 +380,7 @@ const BookingForm = () => {
       {/* Seventh Row: Submit Button */}
       <div>
         <button
-        onClick={() => navigate('/')}
+          onClick={() => navigate('/')}
           type="submit"
           className="mt-4 p-3 w-full bg-[#FB8D43] text-white rounded-md hover:bg-orange-500"
         >
