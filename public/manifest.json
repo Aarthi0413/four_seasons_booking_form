@@ -1,5 +1,5 @@
 {
-    "name": "Four Seasons",
+    "name": "Hotel Four Seasons",
     "version": "0.0.1",
     "size": {
         "width": 3,
@@ -7,11 +7,123 @@
     },
     "mapping": [
         {
-            "dataSetId": "8d02f540-7fe5-419f-92f1-877ee35fc2c6",
+            "dataSetId": "079af82b-97db-4c21-b505-1e92e66da19a",
             "alias": "booking_data",
+            "fields":[]
+        },
+        {
+            "dataSetId":"14974fbd-d0fe-454d-8866-827283b45b64",        
+            "alias":"hotel_data",
             "fields":[]
         }
     ],
-    "id": "06f3771a-e9ab-47d8-a4fe-e35fdfa870fd",
-    "proxyId":"ea6790ee-7fe9-4544-bc55-7c513e487317"
+    "workflowMapping": [
+        {
+          "alias": "four_seasons_booking_form",
+          "modelId": null,
+          "version": "1.0.0",
+          "parameters": [
+            {
+              "name": "Guest_Name",
+              "aliasedName": "Guest_Name",
+              "type": "text",
+              "list": false,
+              "children": []
+            },
+            {
+              "name": "Mobile",
+              "aliasedName": "Mobile",
+              "type": "text",
+              "list": false,
+              "children": []
+            },
+            {
+              "name": "Email",
+              "aliasedName": "Email",
+              "type": "text",
+              "list": false,
+              "children": []
+            },
+            {
+              "name": "Booking_Date",
+              "aliasedName": "Booking_Date",
+              "type": "date",
+              "list": false,
+              "children": []
+            },
+            {
+              "name": "Proof_Type",
+              "aliasedName": "Proof_Type",
+              "type": "text",
+              "list": false,
+              "children": []
+            },
+            {
+              "name": "Hotel_Name",
+              "aliasedName": "Hotel_Name",
+              "type": "text",
+              "list": false,
+              "children": []
+            },
+            {
+              "name": "Segment",
+              "aliasedName": "Segment",
+              "type": "text",
+              "list": false,
+              "children": []
+            },
+            {
+              "name": "Room_Type",
+              "aliasedName": "Room_Type",
+              "type": "text", 
+              "list": false,
+              "children": []
+            },
+            {
+              "name": "Room_ID",
+              "aliasedName": "Room_ID",
+              "type": "text", 
+              "list": false,
+              "children": []
+            },
+            {
+              "name": "Checking_Date",
+              "aliasedName": "Checking_Date",
+              "type": "date", 
+              "list": false,
+              "children": []
+            },
+            {
+              "name": "Checkout_Date",
+              "aliasedName": "Checkout_Date",
+              "type": "date", 
+              "list": false,
+              "children": []
+            },
+            {
+              "name": "Total_Days",
+              "aliasedName": "Total_Days",
+              "type": "number",
+              "list": false,
+              "children": []
+            },
+            {
+                "name": "Price",
+                "aliasedName": "Price",
+                "type": "number",
+                "list": false,
+                "children": []
+            },
+            {
+                "name": "Occupancy_Status",
+                "aliasedName": "Occupancy_Status",
+                "type": "text",
+                "list": false,
+                "children": []
+            }
+          ]
+        }
+    ],
+    "id": "eeebc6d5-02bb-4ba8-b3da-080f7d4ef29b",
+  "proxyId": "3cefe556-adf6-407a-9bc7-ff482965314c"
 }
